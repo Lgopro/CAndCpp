@@ -1,0 +1,16 @@
+
+#Ignore everything 
+*
+
+#But not there files:
+!.gitignore
+!*.c
+!*.h
+!*.cpp
+!*.hpp
+!makefile
+!.myfuncs
+
+
+#Even if there are in subdirectories here
+!*/
