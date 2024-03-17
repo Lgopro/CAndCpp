@@ -40,11 +40,9 @@ namespace ilrd
                 Timer& operator=(const Timer& other) = default;
 
                 void ResetTime();
-                double WorkTime() const;
+                double WorkTime();
 
             private:
-
-                
 
                 std::chrono::time_point<std::chrono::high_resolution_clock> m_start_timepoint;
         };
@@ -67,6 +65,7 @@ namespace ilrd
             void SetPumpNumber(size_t number);
             void SetPumpWorkTime(size_t work_time);
             void SetAlarmTimer(size_t alarm_timer);
+            size_t GetPumpNumber() const;
             
             private:
 
@@ -74,9 +73,10 @@ namespace ilrd
             bool m_alarm_pump = false;
 
             TimeStruct total_time_pump_struct;
+            Timer m_pump_timer;
+
             size_t m_work_before_change_pump;
             size_t m_timer_before_alarm_sensor;
-            Timer m_timer;
             size_t m_pump_number;
         };
 
@@ -85,6 +85,7 @@ namespace ilrd
         void Stop();
         uint32_t GetSysTicks();
         TimeStruct TotalPumpWorkingTime();
+        Pump *GetPumps();
 
         private:
 
