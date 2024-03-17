@@ -66,7 +66,7 @@ namespace ilrd
             void SetPumpWorkTime(size_t work_time);
             void SetAlarmTimer(size_t alarm_timer);
             size_t GetPumpNumber() const;
-            
+
             private:
 
             bool m_turn_on_pump = false;
@@ -86,6 +86,11 @@ namespace ilrd
         uint32_t GetSysTicks();
         TimeStruct TotalPumpWorkingTime();
         Pump *GetPumps();
+        
+        void OpenSensor11();
+        void CloseSensor11();
+        void OpenSensor14();
+        void CloseSensor14();
 
         private:
 

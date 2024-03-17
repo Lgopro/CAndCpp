@@ -29,6 +29,7 @@ Pumps::Pumps(size_t pause_before_change_pump, size_t timer_before_alarm_sensor, 
     m_two_pumps[1].SetAlarmTimer(m_timer_before_alarm_sensor);
     m_two_pumps[1].SetPumpWorkTime(m_time_in_sec_to_work_pump);
 
+    OpenSensor11();
     m_total_timer.ResetTime();
 }
 
@@ -43,7 +44,8 @@ void Pumps::Run()
             next_pump = SECONDPUMP;
             m_run_first_time = false;
         }
-        else
+        else if(m_two_pumps[0].CheckAlarmStatus() == false  || 
+                m_two_pumps[1].CheckAlarmStatus() == false)
         {
             if(next_pump == FIRSTPUMP)
             {
@@ -62,6 +64,7 @@ void Pumps::Run()
             }
             else
             {
+
                 if(m_two_pumps[1].CheckAlarmStatus() == true)
                 {
                     #ifndef NDEBUG
@@ -76,6 +79,32 @@ void Pumps::Run()
 
                 next_pump = FIRSTPUMP;
             }
+        }
+        else
+        {
+            #ifndef NDEBUG
+            std::cout<< "Alarm on both pumps!" <<std::endl;
+            std::cout<< "Waiting until one of the pumps to start working..." <<std::endl;
+            std::cout<< "Open sensor 14" <<std::endl;
+            #endif /*NDEBUG*/
+
+            OpenSensor14();
+
+            while(true)
+                {   
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    if(m_stop_flag == true || m_two_pumps[0].CheckAlarmStatus() == false 
+                       || m_two_pumps[1].CheckAlarmStatus() == false)
+                       {
+                            break;
+                       }
+                }
+
+            #ifndef NDEBUG
+            std::cout<< "Pump started working!" <<std::endl;
+            std::cout<< "Close sensor 14" <<std::endl;
+            #endif /*NDEBUG*/
+            CloseSensor14();
         }
         PauseBeforeNextPump();
     }
@@ -115,6 +144,22 @@ Pumps::TimeStruct Pumps::TotalPumpWorkingTime()
     return m_total_time_struct;
 }
 
+void Pumps::OpenSensor11()
+{
+    m_sensor11_open = true;
+}
+void Pumps::CloseSensor11()
+{
+    m_sensor11_open = false;
+}
+void Pumps::OpenSensor14()
+{
+    m_sensor14_open = true;
+}
+void Pumps::CloseSensor14()
+{
+    m_sensor14_open = false;
+}
 
 Pumps::~Pumps()
 {
@@ -125,6 +170,7 @@ Pumps::~Pumps()
     std::cout<< "Minutes worked: "<< m_total_time_struct.m_minutes << std::endl;
     std::cout<< "Seconds worked: "<< m_total_time_struct.m_seconds << std::endl;
     #endif /*NDEBUG*/
+    CloseSensor11();
 }
 
 Pumps::Pump *Pumps::GetPumps() 
