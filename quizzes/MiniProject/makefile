@@ -2,7 +2,7 @@
 
 TARGET= $(NAME)
 CC= g++ 
-CFLAGS= -g 
+CFLAGS= -g -pthread
 CFRELEASE = -ansi -pedantic-errors -Wall -Wextra -DNDEBUG -O3
 TESTDIR = 
 SRCDIR = 
