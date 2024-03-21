@@ -99,7 +99,6 @@ unsigned int Product::GetQuantity()
 
 void ShopingCart::Remove(Product& product, unsigned int amount)
 {
-
     if(m_product_list.end() == m_product_list.find(product.GetName()))
     {
         std::cout << "No such product found" << std::endl;
@@ -117,7 +116,6 @@ void ShopingCart::Remove(Product& product, unsigned int amount)
         {
             m_product_list.erase(iter);
         }
-        
     }
 }
 

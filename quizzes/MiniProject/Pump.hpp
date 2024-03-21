@@ -36,8 +36,8 @@ namespace ilrd
             public:
                 Timer();
                 ~Timer() = default;
-                Timer(const Timer& other) = default;
-                Timer& operator=(const Timer& other) = default;
+                Timer(const Timer& other) = default; /*can be delete. According to user requirments.*/
+                Timer& operator=(const Timer& other) = default; /*can be delete. According to user requirments.*/
 
                 void ResetTime();
                 double WorkTime();
@@ -52,8 +52,8 @@ namespace ilrd
             public:
             Pump(size_t work_before_change_pump = 5,  size_t timer_before_alarm_sensor = 2, size_t pump_number = 0);
             ~Pump();
-            Pump(const Pump& other) = default;
-            Pump& operator=(const Pump& other) = default;
+            Pump(const Pump& other) = default; /*can be delete. According to user requirments.*/
+            Pump& operator=(const Pump& other) = default; /*can be delete. According to user requirments.*/
 
             void TurnOn();
             void TurnOff();
@@ -94,8 +94,8 @@ namespace ilrd
 
         private:
 
-        Pumps(const Pumps& other) = default;
-        Pumps& operator=(const Pumps& other) = default;
+        Pumps(const Pumps& other) = default; /*can be delete. According to user requirments.*/
+        Pumps& operator=(const Pumps& other) = default; /*can be delete. According to user requirments.*/
 
         bool m_sensor11_open = false;
         bool m_sensor14_open = false;

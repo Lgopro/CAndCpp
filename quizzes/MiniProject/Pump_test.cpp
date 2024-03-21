@@ -4,7 +4,7 @@
 
 #include "Pump.hpp"
 #include <iostream> /*std::cout*/
-#include <thread> /*std::thread*/
+
 
 using namespace ilrd;
 
@@ -85,7 +85,6 @@ void TwoNotWorkingPumps2()
 
 int main()
 {
-
     NormalWorkOfTwoPamps();
     OneNotWorkingPump();
     TwoNotWorkingPumps();
