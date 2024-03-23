@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <unistd.h> /*close*/
 #include <sys/select.h>
+#include <mutex>
 
 const int TEXT_SIZE = 50;
 const int SIZE_OF_TEXT = 1024;
@@ -25,6 +26,8 @@ namespace ilrd
         std::string ip;
         std::string user;
         std::string password;
+        std::time_t m_last_active_time;
+        bool was_active_ever = false;
         bool is_active = false;
     };
 
@@ -47,50 +50,6 @@ namespace ilrd
         User& operator=(const User& other) = delete;
     };
 
-    /* class TcpUser : public User
-    {
-        public:
-
-        TcpUser(int port);
-        ~TcpUser();
-
-        void GetScreenshot();
-        std::time_t GetLastActiveTime();
-        const char *GetIp();
-        std::string GetUserName() const;
-        std::string GetPassword() const;
-        bool IsActive() const;
-
-        void TCPCreateSocketUser();
-        void TCPPrepareAddrUser();
-        void TCPSendAndRecieveUser(char *message);
-
-
-        private:
-
-        TcpUser(const TcpUser& other) = delete;
-        TcpUser& operator=(const TcpUser& other) = delete;
-
-        char m_user_name[50];
-        char m_pass_word[50];
-
-        std::time_t m_last_active_time;
-        bool is_user_active = false;
-        bool is_user_right = false;
-
-        std::string m_ip;
-
-        char ack[SIZE_OF_TEXT];
-        int sockfd;
-        struct sockaddr_in server_addr;
-        struct sockaddr_in client_addr;
-        char server_ip_addr[TEXT_SIZE];
-        int server_port_number;
-        char buffer_from_user[SIZE_OF_TEXT];
-        socklen_t client_len;
-
-    }; */
-
     class UdpUser : public User
     {
         public:
@@ -104,7 +63,7 @@ namespace ilrd
         std::string GetUserName() const;
         std::string GetPassword() const;
         bool IsActive() const;
-
+        std::string GetLink();
         void UDPCreateSocketUser();
         void UDPPrepareAddrUser();
         void UDPSendAndRecieveUser(char * message);
@@ -123,7 +82,9 @@ namespace ilrd
         bool is_user_right = false;
 
         std::string m_ip;
-        
+        std::string m_github_link;
+
+
         char ack[SIZE_OF_TEXT];
         int sockfd;
         struct sockaddr_in server_addr;
@@ -140,7 +101,10 @@ namespace ilrd
 
         void PrintAllActiveUsers() const;
         void AddNewUser(std::string user_name, UserData user_data);
+        void RemoveUser(std::string user_name);
+        void PrintLastActiveTime(std::string user_name);
         void PrintAllUserNames() const;
+
         void Run();
 
         void TCPSendAndRecieveServer();
@@ -156,6 +120,7 @@ namespace ilrd
         
         std::string m_github_link;
         bool m_working_server = true;
+        std::mutex m_mutex;
 
         char ack[TEXT_SIZE];
         int udpsock;
