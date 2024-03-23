@@ -49,7 +49,7 @@ static int max(int x, int y)
     }
     return y;
 }
-
+/* 
 TcpUser::TcpUser(int port) : server_port_number(port)
 {
     char TotalMessage[SIZE_OF_TEXT];
@@ -86,11 +86,17 @@ TcpUser::TcpUser(int port) : server_port_number(port)
 
 TcpUser::~TcpUser()
 {
+    char TotalMessage[SIZE_OF_TEXT];
     is_user_active = false;
-    /*Send that im dead*/
 
+    strcpy(TotalMessage, m_user_name);
+    strcat(TotalMessage, m_pass_word);
+    strcat(TotalMessage, "F");
+
+    TCPSendAndRecieveUser(TotalMessage);
     auto now = std::chrono::system_clock::now();
     m_last_active_time = std::chrono::system_clock::to_time_t(now);
+    std::cout << "Exit server. Good night!" << std::endl;
     close(sockfd);
 }
 
@@ -115,11 +121,11 @@ const char *TcpUser::GetIp()
 
     struct hostent *host_entry;
     int hostname;
-    hostname = gethostname(host, sizeof(host)); // find the host name
+    hostname = gethostname(host, sizeof(host)); 
     check_host_name(hostname);
-    host_entry = gethostbyname(host); // find host information
+    host_entry = gethostbyname(host); 
     check_host_entry(host_entry);
-    m_ip = inet_ntoa(*((struct in_addr *)host_entry->h_addr_list[0])); // Convert into IP string
+    m_ip = inet_ntoa(*((struct in_addr *)host_entry->h_addr_list[0])); 
     return m_ip.c_str();
 }
 
@@ -140,7 +146,7 @@ bool TcpUser::IsActive() const
 
 void TcpUser::TCPCreateSocketUser()
 {
-    /* Create TCP socket */
+    
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1)
     {
@@ -150,13 +156,13 @@ void TcpUser::TCPCreateSocketUser()
 }
 void TcpUser::TCPPrepareAddrUser()
 {
-    /* Prepare server address */
+    
 
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(server_port_number); /* Server port number */
-    server_addr.sin_addr.s_addr = inet_addr(GetIp()); /* Server IP address */
+    server_addr.sin_port = htons(server_port_number); 
+    server_addr.sin_addr.s_addr = inet_addr(GetIp()); 
 
-    /* Connect to the server */
+    
     if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
     {
         perror("connect");
@@ -168,11 +174,11 @@ void TcpUser::TCPPrepareAddrUser()
 void TcpUser::TCPSendAndRecieveUser(char *message)
 {
     char ack[100];
-    /* Send message to server */
+    
     send(sockfd, message, SIZE_OF_TEXT, 0);
     printf("Sent to server: %s\n", message);
 
-    /* Receive acknowledgment from server */
+    
     sleep(1);
     recv(sockfd, ack, sizeof(ack), 0);
     std::cout << "Received acknowledgment: " << ack << std::endl;
@@ -181,7 +187,7 @@ void TcpUser::TCPSendAndRecieveUser(char *message)
         is_user_right = true;
     }
 }
-
+ */
 UdpUser::UdpUser(int port) : server_port_number(port)
 {
     char TotalMessage[SIZE_OF_TEXT];
@@ -327,9 +333,21 @@ void Server::Run()
     server_addr.sin_port = htons(server_port_number);
 
     // binding server addr structure to listenfd
-    bind(tcpsock, (struct sockaddr *)&server_addr, sizeof(server_addr));
-    listen(tcpsock, 10);
+    if (bind(tcpsock, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+    {
+        perror("bind");
+        close(tcpsock);
+        exit(EXIT_FAILURE);
+    }
 
+    // Listen for incoming connections
+    if (listen(tcpsock, 10) == -1)
+    {
+        perror("listen");
+        close(tcpsock);
+        exit(EXIT_FAILURE);
+    }
+    
     /* create UDP socket */
     udpsock = socket(AF_INET, SOCK_DGRAM, 0);
     // binding server addr structure to udp sockfd
@@ -346,11 +364,13 @@ void Server::Run()
         FD_SET(tcpsock, &rset);
         FD_SET(udpsock, &rset);
         // select the ready descriptor
+        std::cout << "Got to select" << std::endl;
         ready_descriptor = select(maxfd, &rset, NULL, NULL, NULL);
         // if tcp socket is readable then handle
         // it by accepting the connection
         if (FD_ISSET(tcpsock, &rset))
         {
+            std::cout << "Entered TCPSendAndRecieveServer" << std::endl;
             TCPSendAndRecieveServer();
         }
         // if udp socket is readable receive the message.
@@ -378,52 +398,59 @@ void Server::TCPSendAndRecieveServer()
     if (newsockfd == -1)
     {
         perror("accept");
-        close(tcpsock);
-        exit(EXIT_FAILURE);
     }
 
     /* Receive message from client */
     memset(buffer_from_user, 0, sizeof(buffer_from_user));
-    bytes_reveived = recv(newsockfd, buffer_from_user, sizeof(buffer_from_user), 0);
-    if (bytes_reveived <= 0)
+    std::cout << "Got until recieve" << std::endl;
+    while(true)
     {
-        std::cout << "Did not get anything" << std::endl;
-        return;
-    }
-
-    std::string buff = buffer_from_user;
-
-    if (buff.length() <= 4)
-    {
-        send(newsockfd, "fail", 5, 0);
-    }
-
-    auto result = m_user_list.find(buff.substr(0, buff.length() - 4));
-
-    if (buff.substr(buff.length() - 1, buff.length()) == "F" &&
-        m_user_list.find(buff.substr(0, buff.length() - 5)) != m_user_list.end())
-    {
-        auto result = m_user_list.find(buff.substr(0, buff.length() - 5));
-        result->second.is_active = false;
-        send(newsockfd, "success", 8, 0);
-        close(newsockfd);
-        return;
-    }
-
-    if (m_user_list.find(buff.substr(0, buff.length() - 4)) == m_user_list.end())
-    {
-        sendto(udpsock, "fail", 5, 0, (struct sockaddr *)&client_addr, client_len);
-    }
-    else
-    {
-        if (result->second.password != buff.substr(buff.length() - 4, buff.length()))
+        bytes_reveived = recv(newsockfd, buffer_from_user, sizeof(buffer_from_user), 0);
+        if (bytes_reveived <= 0)
         {
-            sendto(udpsock, "fail", 5, 0, (struct sockaddr *)&client_addr, client_len);
+            /* std::cout << "Did not get anything" << std::endl; */
+            continue;
         }
-        result->second.is_active = true;
-        sendto(udpsock, "success", 8, 0, (struct sockaddr *)&client_addr, client_len);
+        std::cout << "Got something" << std::endl;
+        std::string buff = buffer_from_user;
+        std::cout << "Recieved" << buff << std::endl;
+        if (buff.length() <= 4)
+        {
+            send(newsockfd, "fail", 5, 0);
+        }
+
+        auto result = m_user_list.find(buff.substr(0, buff.length() - 4));
+
+        if (buff.substr(buff.length() - 1, buff.length()) == "F" &&
+            m_user_list.find(buff.substr(0, buff.length() - 5)) != m_user_list.end())
+        {
+            std::cout << "Got here1" << std::endl;
+            auto result = m_user_list.find(buff.substr(0, buff.length() - 5));
+            result->second.is_active = false;
+            send(newsockfd, "success", 8, 0);
+            close(newsockfd);
+            return;
+        }
+
+        if (m_user_list.find(buff.substr(0, buff.length() - 4)) == m_user_list.end())
+        {
+            std::cout << "Got here2" << std::endl;
+            sendto(newsockfd, "fail", 5, 0, (struct sockaddr *)&client_addr, client_len);
+        }
+        else
+        {
+
+            if (result->second.password != buff.substr(buff.length() - 4, buff.length()))
+            {
+                std::cout << "Got here3" << std::endl;
+                sendto(newsockfd, "fail", 5, 0, (struct sockaddr *)&client_addr, client_len);
+            }
+            std::cout << "Got here4" << std::endl;
+            result->second.is_active = true;
+            sendto(newsockfd, "success", 8, 0, (struct sockaddr *)&client_addr, client_len);
+        }
     }
-    close(newsockfd);
+    /* close(newsockfd); */
 }
 
 void Server::UDPSendAndRecieveServer()

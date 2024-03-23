@@ -47,7 +47,7 @@ namespace ilrd
         User& operator=(const User& other) = delete;
     };
 
-    class TcpUser : public User
+    /* class TcpUser : public User
     {
         public:
 
@@ -89,7 +89,7 @@ namespace ilrd
         char buffer_from_user[SIZE_OF_TEXT];
         socklen_t client_len;
 
-    };
+    }; */
 
     class UdpUser : public User
     {

@@ -7,7 +7,7 @@ using namespace ilrd;
 int main()
 {
     std::string str= "github.com/example";
-    Server udp_tcp_server(9999, str);
+    Server udp_tcp_server(9000, str);
 
     UserData user1;
     UserData user2;
@@ -73,7 +73,6 @@ int main()
     user7.user = "Maria";
     user7.password = "4167";
     user7.is_active = false;
-
 
     udp_tcp_server.AddNewUser(user1.user, user1);
     udp_tcp_server.AddNewUser(user2.user, user2);
