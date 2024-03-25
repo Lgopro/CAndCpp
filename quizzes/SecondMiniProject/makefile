@@ -2,7 +2,7 @@
 
 TARGET= $(NAME)
 CC= g++ 
-CFLAGS= -g -pthread
+CFLAGS= -g -pthread -lboost_system
 CFRELEASE = -ansi -pedantic-errors -Wall -Wextra -DNDEBUG -O3
 TESTDIR = 
 SRCDIR = 

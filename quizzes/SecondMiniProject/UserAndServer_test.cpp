@@ -8,7 +8,7 @@ void Test2()
 {
     std::cout << "Test 2. Check active users." << std::endl;
     std::string str= "github.com/example";
-    Server udp_tcp_server(9000, str);
+    Server udp_tcp_server(9000, 9001, str);
 
     UserData user1;
     UserData user2;
@@ -110,7 +110,7 @@ void Test3()
 {
     std::cout << "Test 3. Check last active time when all users are not active." << std::endl;
     std::string str= "github.com/example";
-    Server udp_tcp_server(9000, str);
+    Server udp_tcp_server(9000, 9001, str);
 
     UserData user1;
     UserData user2;
@@ -212,7 +212,7 @@ void Test1()
     std::cout << "Test print all users. Add Bella. Remove Maria." << std::endl;
 
     std::string str = "github.com/example";
-    Server udp_tcp_server(9000, str);
+    Server udp_tcp_server(9000, 9001, str);
 
     UserData user1;
     UserData user2;

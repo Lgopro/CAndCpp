@@ -35,27 +35,8 @@ namespace ilrd
     {
         public:
 
-        User() = default;
-        ~User() = default;
-
-        virtual void GetScreenshot() = 0;
-        virtual std::time_t GetLastActiveTime() = 0;
-        virtual const char *GetIp() = 0;
-        virtual std::string GetUserName() const = 0;
-        virtual std::string GetPassword() const = 0;
-        virtual bool IsActive() const = 0;
-
-        private:
-        User(const User& other) = delete;
-        User& operator=(const User& other) = delete;
-    };
-
-    class UdpUser : public User
-    {
-        public:
-
-        UdpUser(int port);
-        ~UdpUser();
+        User(int udp_port, int tcp_port);
+        ~User();
 
         void GetScreenshot();
         std::time_t GetLastActiveTime();
@@ -70,8 +51,8 @@ namespace ilrd
 
         private:
 
-        UdpUser(const UdpUser& other) = delete;
-        UdpUser& operator=(const UdpUser& other) = delete;
+        User(const User& other) = delete;
+        User& operator=(const User& other) = delete;
 
         char m_user_name[50];
         char m_pass_word[50];
@@ -90,13 +71,14 @@ namespace ilrd
         struct sockaddr_in server_addr;
         char server_ip_addr[TEXT_SIZE];
         int server_port_number;
+        int tcp_server_port_number;
     };
 
     class Server
     {
         public:
 
-        Server(int port_number, std::string github_link);
+        Server(int udp_port_number, int tcp_port_number, std::string github_link);
         ~Server();
 
         void PrintAllActiveUsers() const;
@@ -129,6 +111,7 @@ namespace ilrd
         struct sockaddr_in client_addr;
         char server_ip_addr[TEXT_SIZE];
         int server_port_number;
+        int tcp_server_port_number;
         char buffer_from_user[TEXT_SIZE];
         socklen_t client_len;
         fd_set rset;

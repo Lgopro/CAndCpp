@@ -1,5 +1,3 @@
-
-
 #include "UserAndServer.hpp"
 #include <iomanip>
 #include <chrono>
@@ -53,7 +51,7 @@ static int max(int x, int y)
 }
 
 
-UdpUser::UdpUser(int port) : server_port_number(port)
+User::User(int udp_port, int tcp_port) : server_port_number(udp_port), tcp_server_port_number(tcp_port)
 {
     char TotalMessage[SIZE_OF_TEXT];
 
@@ -86,7 +84,7 @@ UdpUser::UdpUser(int port) : server_port_number(port)
     is_user_active = true;
 }
 
-UdpUser::~UdpUser()
+User::~User()
 {
     char TotalMessage[SIZE_OF_TEXT];
     char date[20];
@@ -107,11 +105,11 @@ UdpUser::~UdpUser()
     close(sockfd);
 }
 
-void UdpUser::GetScreenshot()
+void User::GetScreenshot()
 {
 }
 
-std::time_t UdpUser::GetLastActiveTime()
+std::time_t User::GetLastActiveTime()
 {
     if (is_user_active = true)
     {
@@ -122,7 +120,7 @@ std::time_t UdpUser::GetLastActiveTime()
     return m_last_active_time;
 }
 
-const char *UdpUser::GetIp()
+const char *User::GetIp()
 {
     char host[256];
 
@@ -136,22 +134,22 @@ const char *UdpUser::GetIp()
     return m_ip.c_str();
 }
 
-std::string UdpUser::GetUserName() const
+std::string User::GetUserName() const
 {
     return m_user_name;
 }
 
-std::string UdpUser::GetPassword() const
+std::string User::GetPassword() const
 {
     return m_pass_word;
 }
 
-bool UdpUser::IsActive() const
+bool User::IsActive() const
 {
     return is_user_active;
 }
 
-void UdpUser::UDPCreateSocketUser()
+void User::UDPCreateSocketUser()
 {
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd == -1)
@@ -161,7 +159,7 @@ void UdpUser::UDPCreateSocketUser()
     }
 }
 
-void UdpUser::UDPPrepareAddrUser()
+void User::UDPPrepareAddrUser()
 {
     /* Prepare server address */
     server_addr.sin_family = AF_INET;
@@ -169,7 +167,7 @@ void UdpUser::UDPPrepareAddrUser()
     server_addr.sin_addr.s_addr = inet_addr(m_ip.c_str()); /* Server IP address */
 }
 
-void UdpUser::UDPSendAndRecieveUser(char *message)
+void User::UDPSendAndRecieveUser(char *message)
 {
     /* Send message to server */
     /* const char *message = "Ping!"; */
@@ -206,12 +204,12 @@ void UdpUser::UDPSendAndRecieveUser(char *message)
     
 }
 
-std::string UdpUser::GetLink()
+std::string User::GetLink()
 {
     return m_github_link;
 }
 
-Server::Server(int server_port, std::string github_link) : m_github_link(github_link), server_port_number(server_port)
+Server::Server(int udp_port_number, int tcp_port_number, std::string github_link) : m_github_link(github_link), server_port_number(udp_port_number), tcp_server_port_number(tcp_port_number)
 {
 }
 
