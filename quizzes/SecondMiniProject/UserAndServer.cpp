@@ -1,4 +1,5 @@
 #include "UserAndServer.hpp"
+
 #include <iomanip>
 #include <chrono>
 #include <sys/socket.h>
@@ -11,6 +12,10 @@
 #include <thread>
 #include <ctime>
 #include <sstream>
+#include <fstream>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 using namespace ilrd;
 
@@ -59,7 +64,6 @@ User::User(int udp_port, int tcp_port) : server_port_number(udp_port), tcp_serve
 
     UDPCreateSocketUser();
     UDPPrepareAddrUser();
-
     while (true)
     {
         std::cout << "Please enter a username" << std::endl;
@@ -101,12 +105,58 @@ User::~User()
     UDPSendAndRecieveUser(TotalMessage);
     auto now = std::chrono::system_clock::now();
     m_last_active_time = std::chrono::system_clock::to_time_t(now);
+
+    std::cout << "Sending screenshot before exiting." << std::endl;
+    SendScreenshot();
+
     std::cout << "Exit server. Good night!" << std::endl;
-    close(sockfd);
+    
 }
 
-void User::GetScreenshot()
+void User::SendScreenshot()
 {
+    // Create socket
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) 
+    {
+        std::cerr << "Socket creation failed" << std::endl;
+        return;
+    }
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(tcp_server_port_number);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+
+    // Connect to the server
+    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) 
+    {
+        std::cerr << "Connection failed" << std::endl;
+        close(sockfd);
+        return;
+    }
+
+    std::string saveDirectory = "/home/lgopro/Desktop/";
+    std::string name = m_user_name;
+    std::string pass = m_pass_word;
+    
+    // Open image file
+    std::ifstream file(saveDirectory + name + pass + ".png", std::ios::binary);
+    if (!file.is_open()) 
+    {
+        std::cerr << "Failed to open file" << std::endl;
+        close(sockfd);
+        return;
+    }
+
+    // Read image file and send over TCP
+    char buffer[1024];
+    while (!file.eof()) 
+    {
+        file.read(buffer, sizeof(buffer));
+        send(sockfd, buffer, file.gcount(), 0);
+    }
+
+    file.close();
+    close(sockfd);
 }
 
 std::time_t User::GetLastActiveTime()
@@ -201,7 +251,7 @@ void User::UDPSendAndRecieveUser(char *message)
         #endif /*NDEBUG*/
     }
     
-    
+    close(sockfd);
 }
 
 std::string User::GetLink()
@@ -209,39 +259,75 @@ std::string User::GetLink()
     return m_github_link;
 }
 
+
+
 Server::Server(int udp_port_number, int tcp_port_number, std::string github_link) : m_github_link(github_link), server_port_number(udp_port_number), tcp_server_port_number(tcp_port_number)
 {
 }
 
-void Server::Run()
-{
-    /* create listening TCP socket */
+void Server::TCPCreateSocketServer()  
+{  
+    /* Create TCP socket */
     tcpsock = socket(AF_INET, SOCK_STREAM, 0);
-    bzero(&server_addr, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_addr.sin_port = htons(server_port_number);
+    if (tcpsock == -1) 
+    {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+}  
 
-    /* binding server addr structure to listenfd */
-    if (bind(tcpsock, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+void Server::TCPPrepareAddrServer()
+{
+    /* Bind socket to server address */
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(tcp_server_port_number);   /* Server port number */
+
+    if (bind(tcpsock, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) 
     {
         perror("bind");
         close(tcpsock);
         exit(EXIT_FAILURE);
     }
+}
 
-    /* Listen for incoming connections */
-    if (listen(tcpsock, 10) == -1)
+void Server::TCPPrepareListenServer()
+{
+    if (listen(tcpsock, 5) < 0) 
     {
         perror("listen");
-        close(tcpsock);
         exit(EXIT_FAILURE);
     }
+    std::cout << "TCP Server listening for connections..." << std::endl;
+}
+
+
+
+void Server::Run()
+{
+    TCPCreateSocketServer();
+    TCPPrepareAddrServer();
+    TCPPrepareListenServer();
     
-    /* create UDP socket */
+
     udpsock = socket(AF_INET, SOCK_DGRAM, 0);
-    /* binding server addr structure to udp sockfd */
-    bind(udpsock, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    if (udpsock == -1) 
+    {
+        std::cerr << "Error creating socket" << std::endl;
+        return;
+    }
+
+    // Server configuration
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(server_port_number);
+
+    // Bind socket
+    if (bind(udpsock, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) 
+    {
+        std::cerr << "Error binding socket" << std::endl;
+        return;
+    }
 
     /* clear the descriptor set */
     FD_ZERO(&rset);
@@ -260,11 +346,19 @@ void Server::Run()
         #endif /*NDEBUG*/
 
         ready_descriptor = select(maxfd, &rset, NULL, NULL, NULL);
+
+        #ifndef NDEBUG
+        std::cout << "Got after select" << std::endl;
+        #endif /*NDEBUG*/
+
         /* if tcp socket is readable then handle */
         /* it by accepting the connection */
         if (FD_ISSET(tcpsock, &rset))
         {
-            TCPSendAndRecieveServer();
+            #ifndef NDEBUG
+            std::cout << "Entered TCP" << std::endl;
+            #endif /*NDEBUG*/
+            TCPSendAndRecieveServer(file_name);
         }
         /* if udp socket is readable receive the message. */
         if (FD_ISSET(udpsock, &rset))
@@ -277,72 +371,66 @@ void Server::Run()
 Server::~Server()
 {
     m_working_server = false;
+    close(tcpsock);
+    close(udpsock);
 }
 
-void Server::TCPSendAndRecieveServer()
+void handleClient(int new_socket, std::string name, int tcpport)
 {
-    ssize_t bytes_reveived = 0;
-
-    /* Listen for incoming connections */
-    int newsockfd;
-
-    /* Accept incoming connection */
-    newsockfd = accept(tcpsock, (struct sockaddr *)&client_addr, &client_len);
-    if (newsockfd == -1)
+    char buffer[SIZE_OF_TEXT] = {0};
+    int valread;
+    
+     // Open file to write received data, overwriting if it exists
+    std::ofstream received_file(name, std::ios::binary | std::ios::trunc);
+    if (!received_file.is_open()) 
     {
-        perror("accept");
+        std::cerr << "Failed to create " << name << std::endl;
+        close(new_socket);
+        return;
     }
 
-    /* Receive message from client */
-    memset(buffer_from_user, 0, sizeof(buffer_from_user));
-    std::cout << "Got until recieve" << std::endl;
-    while(true)
+    // Receive image data and write to file
+    while ((valread = recv(new_socket, buffer, SIZE_OF_TEXT, 0)) > 0) 
     {
-        bytes_reveived = recv(newsockfd, buffer_from_user, sizeof(buffer_from_user), 0);
-        if (bytes_reveived <= 0)
-        {
-            /* std::cout << "Did not get anything" << std::endl; */
-            continue;
-        }
-        std::cout << "Got something" << std::endl;
-        std::string buff = buffer_from_user;
-        std::cout << "Recieved" << buff << std::endl;
-        if (buff.length() <= 4)
-        {
-            send(newsockfd, "fail", 5, 0);
-        }
+        received_file.write(buffer, valread);
+    }
 
-        auto result = m_user_list.find(buff.substr(0, buff.length() - 4));
+    received_file.close();
+    close(new_socket);
+}
 
-        if (buff.substr(buff.length() - 1, buff.length()) == "F" &&
-            m_user_list.find(buff.substr(0, buff.length() - 5)) != m_user_list.end())
+void Server::TCPSendAndRecieveServer(std::string name)
+{
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        client_len = sizeof(client_addr);
+        if((new_socket = accept(tcpsock, (struct sockaddr *)&client_addr, (socklen_t *)&client_len)) < 0) 
         {
-            std::cout << "Got here1" << std::endl;
-            auto result = m_user_list.find(buff.substr(0, buff.length() - 5));
-            result->second.is_active = false;
-            send(newsockfd, "success", 8, 0);
-            close(newsockfd);
+            perror("accept");
+        }
+        /* std::thread(handleClient, new_socket, name, tcp_server_port_number).join(); */
+
+        char buffer[SIZE_OF_TEXT] = {0};
+        int valread;
+        
+        // Open file to write received data, overwriting if it exists
+        std::ofstream received_file(name, std::ios::binary | std::ios::trunc);
+        if (!received_file.is_open()) 
+        {
+            std::cerr << "Failed to create " << name << std::endl;
+            close(new_socket);
             return;
         }
 
-        if (m_user_list.find(buff.substr(0, buff.length() - 4)) == m_user_list.end())
+        // Receive image data and write to file
+        while ((valread = recv(new_socket, buffer, SIZE_OF_TEXT, 0)) > 0) 
         {
-            std::cout << "Got here2" << std::endl;
-            sendto(newsockfd, "fail", 5, 0, (struct sockaddr *)&client_addr, client_len);
+            received_file.write(buffer, valread);
         }
-        else
-        {
 
-            if (result->second.password != buff.substr(buff.length() - 4, buff.length()))
-            {
-                std::cout << "Got here3" << std::endl;
-                sendto(newsockfd, "fail", 5, 0, (struct sockaddr *)&client_addr, client_len);
-            }
-            std::cout << "Got here4" << std::endl;
-            result->second.is_active = true;
-            sendto(newsockfd, "success", 8, 0, (struct sockaddr *)&client_addr, client_len);
-        }
-    }
+        received_file.close();
+        close(new_socket);
+    } 
 }
 
 void Server::UDPSendAndRecieveServer()
@@ -370,7 +458,7 @@ void Server::UDPSendAndRecieveServer()
         {
             auto result = m_user_list.find(buff.substr(0, buff.length() - 24));
             result->second.is_active = false;
-            
+            file_name = buff.substr(0, buff.length() - 24) + buff.substr(buff.length() - 24, buff.length() - 20) +".png";
             std::string time_string = buff.substr(buff.length() - 20, buff.length() - 1);
             // Create a std::tm structure to hold the parsed time
             std::tm timeInfo = {};

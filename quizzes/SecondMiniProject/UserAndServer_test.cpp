@@ -110,7 +110,7 @@ void Test3()
 {
     std::cout << "Test 3. Check last active time when all users are not active." << std::endl;
     std::string str= "github.com/example";
-    Server udp_tcp_server(9000, 9001, str);
+    Server udp_tcp_server(8888, 9999, str);
 
     UserData user1;
     UserData user2;

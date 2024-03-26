@@ -38,7 +38,7 @@ namespace ilrd
         User(int udp_port, int tcp_port);
         ~User();
 
-        void GetScreenshot();
+        void SendScreenshot();
         std::time_t GetLastActiveTime();
         const char *GetIp();
         std::string GetUserName() const;
@@ -89,7 +89,11 @@ namespace ilrd
 
         void Run();
 
-        void TCPSendAndRecieveServer();
+        void TCPCreateSocketServer();
+        void TCPPrepareAddrServer();
+        void TCPPrepareListenServer();
+
+        void TCPSendAndRecieveServer(std::string name);
         void UDPSendAndRecieveServer();
         void CloseServer();
 
@@ -104,9 +108,12 @@ namespace ilrd
         bool m_working_server = true;
         std::mutex m_mutex;
 
+        std::string file_name;
+        
         char ack[TEXT_SIZE];
         int udpsock;
         int tcpsock;
+        int new_socket;
         struct sockaddr_in server_addr;
         struct sockaddr_in client_addr;
         char server_ip_addr[TEXT_SIZE];
