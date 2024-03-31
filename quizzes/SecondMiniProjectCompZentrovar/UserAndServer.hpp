@@ -93,6 +93,9 @@ namespace ilrd
         void TCPPrepareAddrServer();
         void TCPPrepareListenServer();
 
+        void UDPCreateSocketServer();
+        void UDPPrepareAddrServer();
+
         void TCPSendAndRecieveServer(std::string name);
         void UDPSendAndRecieveServer();
         void CloseServer();

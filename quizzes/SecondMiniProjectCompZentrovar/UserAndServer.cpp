@@ -271,7 +271,7 @@ void Server::TCPCreateSocketServer()
     tcpsock = socket(AF_INET, SOCK_STREAM, 0);
     if (tcpsock == -1) 
     {
-        perror("socket");
+        std::cerr << "tcp socket" << std::endl;
         exit(EXIT_FAILURE);
     }
 }  
@@ -285,7 +285,7 @@ void Server::TCPPrepareAddrServer()
 
     if (bind(tcpsock, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) 
     {
-        perror("bind");
+        std::cerr << "tcp bind" << std::endl;
         close(tcpsock);
         exit(EXIT_FAILURE);
     }
@@ -295,28 +295,25 @@ void Server::TCPPrepareListenServer()
 {
     if (listen(tcpsock, 5) < 0) 
     {
-        perror("listen");
+        std::cerr << "tcp listen" << std::endl;
+        close(tcpsock);
         exit(EXIT_FAILURE);
     }
     std::cout << "TCP Server listening for connections..." << std::endl;
 }
 
-
-
-void Server::Run()
+void Server::UDPCreateSocketServer()
 {
-    TCPCreateSocketServer();
-    TCPPrepareAddrServer();
-    TCPPrepareListenServer();
-    
-
     udpsock = socket(AF_INET, SOCK_DGRAM, 0);
     if (udpsock == -1) 
     {
         std::cerr << "Error creating socket" << std::endl;
-        return;
+        exit(EXIT_FAILURE);
     }
+}
 
+void Server::UDPPrepareAddrServer()
+{
     // Server configuration
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
@@ -326,8 +323,18 @@ void Server::Run()
     if (bind(udpsock, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) 
     {
         std::cerr << "Error binding socket" << std::endl;
-        return;
+        exit(EXIT_FAILURE);
     }
+}
+
+void Server::Run()
+{
+    TCPCreateSocketServer();
+    TCPPrepareAddrServer();
+    TCPPrepareListenServer();
+    
+    UDPCreateSocketServer();
+    UDPPrepareAddrServer();
 
     /* clear the descriptor set */
     FD_ZERO(&rset);
@@ -380,7 +387,7 @@ void handleClient(int new_socket, std::string name, int tcpport)
     char buffer[SIZE_OF_TEXT] = {0};
     int valread;
     
-     // Open file to write received data, overwriting if it exists
+    /* Open file to write received data, overwriting if it exists */
     std::ofstream received_file(name, std::ios::binary | std::ios::trunc);
     if (!received_file.is_open()) 
     {
@@ -389,7 +396,7 @@ void handleClient(int new_socket, std::string name, int tcpport)
         return;
     }
 
-    // Receive image data and write to file
+    /* Receive image data and write to file */
     while ((valread = recv(new_socket, buffer, SIZE_OF_TEXT, 0)) > 0) 
     {
         received_file.write(buffer, valread);
@@ -408,28 +415,8 @@ void Server::TCPSendAndRecieveServer(std::string name)
         {
             perror("accept");
         }
-        /* std::thread(handleClient, new_socket, name, tcp_server_port_number).join(); */
+        std::thread(handleClient, new_socket, name, tcp_server_port_number).join();
 
-        char buffer[SIZE_OF_TEXT] = {0};
-        int valread;
-        
-        // Open file to write received data, overwriting if it exists
-        std::ofstream received_file(name, std::ios::binary | std::ios::trunc);
-        if (!received_file.is_open()) 
-        {
-            std::cerr << "Failed to create " << name << std::endl;
-            close(new_socket);
-            return;
-        }
-
-        // Receive image data and write to file
-        while ((valread = recv(new_socket, buffer, SIZE_OF_TEXT, 0)) > 0) 
-        {
-            received_file.write(buffer, valread);
-        }
-
-        received_file.close();
-        close(new_socket);
     } 
 }
 
@@ -460,23 +447,23 @@ void Server::UDPSendAndRecieveServer()
             result->second.is_active = false;
             file_name = buff.substr(0, buff.length() - 24) + buff.substr(buff.length() - 24, buff.length() - 20) +".png";
             std::string time_string = buff.substr(buff.length() - 20, buff.length() - 1);
-            // Create a std::tm structure to hold the parsed time
+            /* Create a std::tm structure to hold the parsed time */
             std::tm timeInfo = {};
 
-            // Create a std::istringstream from the time string
+            /* Create a std::istringstream from the time string */
             std::istringstream ss(time_string);
 
-            // Use std::get_time to parse the time string into a std::tm structure
+            /* Use std::get_time to parse the time string into a std::tm structure */
             ss >> std::get_time(&timeInfo, "%Y-%m-%d %H:%M:%S");
 
-            // Check if the parsing was successful
+            /* Check if the parsing was successful */
             if (ss.fail()) 
             {
                 std::cerr << "Error parsing time string" << std::endl;
                 return;
             }
 
-            // Convert the std::tm structure to a time_t value
+            /* Convert the std::tm structure to a time_t value */
             result->second.m_last_active_time = std::mktime(&timeInfo);
         
             char answer[50];
