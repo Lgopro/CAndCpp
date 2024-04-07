@@ -423,8 +423,6 @@ void Game::Run()
             break;
         }
         PreapareForNewRound();
-        std::cout << "After prepare operation: " << std::endl;
-        m_board.PrintBoard();
     }
 }
         
@@ -441,8 +439,6 @@ void Game::MoveSquare(std::string user_input)
     int y = user_input[2] - '0';
 
     m_board.Swap(x, y, user_input[3]);
-    std::cout << "Board after Swap: " << std::endl;
-    m_board.PrintBoard();
 }
 
 void Game::GetUserDataInput()
@@ -484,8 +480,6 @@ void Game::GetUserDataInput()
 void Game::PreapareForNewRound()
 {
     m_board.RemoveSameSquares();
-
-    m_board.PrintBoard();
 
     while(m_board.IsThereSwapAvailable() != true)
     {
