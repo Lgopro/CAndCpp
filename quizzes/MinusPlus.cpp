@@ -17,10 +17,10 @@ void MinusPlus(int *arr, size_t size)
     int i = 0;
 
     assert(arr);
+    assert(size > 1);
 
     while(i < size)
     {
-        
         if(arr[i] >= 0)
         {
             ++plus_counter;
@@ -41,6 +41,7 @@ void MinusPlus(int *arr, size_t size)
             {
                 Swap(&arr[j], &arr[j - 1]);
             }
+
             plus_counter = 0;
             minus_counter = 0;
             ++counter;
@@ -55,13 +56,24 @@ void MinusPlus(int *arr, size_t size)
 
 int main()
 {
-    int arr[] = {-1, 3, -5, -2 ,5, 6, -9, -11};
+   
+    int arr[] = {12, 11, -13, -5, 6, -7, 5, -3, -6};
+    int arr1[] = {-12, 11, 0, -5, 6, -7, 5, -3, -6};
 
     MinusPlus(arr, sizeof(arr)/sizeof(int));
 
     for(size_t i = 0 ; i < sizeof(arr)/sizeof(int); ++i)
     {
-        std::cout << arr[i] << " " << std::endl;
+        std::cout << arr[i] << " ";
     }
+    std::cout << " " << std::endl;
+
+    MinusPlus(arr1, sizeof(arr1)/sizeof(int));
+
+    for(size_t i = 0 ; i < sizeof(arr1)/sizeof(int); ++i)
+    {
+        std::cout << arr1[i] << " ";
+    }
+    std::cout << " " << std::endl;
     return 0;
 }

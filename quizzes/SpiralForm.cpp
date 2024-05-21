@@ -23,7 +23,7 @@ void PrintInSpiral(int ** arr, int max_x, int max_y)
 
     while(counter != 0)
     {
-        std::cout<< arr[current_y][current_x] << std::endl;
+        std::cout<< arr[current_y][current_x] << " ";
         if(current_x + 1 == max_x && direction == RIGHT)
         {
             direction = (direction + 1) % AMOUNT;

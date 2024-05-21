@@ -34,8 +34,9 @@ node_t *ReverseList(node_t *head)
     return prev;
 }
 
-node_t *ReverseListRec(node_t *head, size_t *counter)
+node_t *ReverseListRec(node_t *head)
 {
+    static int counter = 0;
     node_t *result = NULL;
     static node_t *final_back;
     
@@ -44,12 +45,12 @@ node_t *ReverseListRec(node_t *head, size_t *counter)
         final_back = head;
         return head;
     }
-    ++*counter;
-    result = ReverseListRec(head->m_next , counter);
+    ++counter;
+    result = ReverseListRec(head->m_next);
 
-    --*counter;
+    --counter;
 
-    if(*counter == 0)
+    if(counter == 0)
     {
         head->m_next->m_next = head;
         head->m_next->m_next->m_next = NULL;
@@ -93,16 +94,56 @@ int main()
     node8->m_value = 8;
     node9->m_value = 9;
 
+    printf("Before reverse:\n");
+    node_t *begin = node1;
 
-    /* node_t *result = ReverseList(node1); *//*work*/
+    while(begin != NULL)
+    {
+        printf(" %d ", begin->m_value);
+        begin = begin->m_next;
+    }
+    printf("\n");
+    printf("Iterative:\n");
+    node_t *result = ReverseList(node1);
+
     
-    node_t *result = ReverseListRec(node1, &counter);
     while(result != NULL)
     {
         printf(" %d ", result->m_value);
         result = result->m_next;
     }
+    printf("\n");
+        
+    node1->m_next = node2;
+    node2->m_next = node3;
+    node3->m_next = node4;
+    node4->m_next = node5;
+    node5->m_next = node6;
+    node6->m_next = node7;
+    node7->m_next = node8;
+    node8->m_next = node9;
+    node9->m_next = NULL;
 
+    node1->m_value = 1;
+    node2->m_value = 2;
+    node3->m_value = 3;
+    node4->m_value = 4;
+    node5->m_value = 5;
+    node6->m_value = 6;
+    node7->m_value = 7;
+    node8->m_value = 8;
+    node9->m_value = 9;
+
+    printf("Recursive:\n");
+    node_t *result1 = ReverseListRec(node1);
+    while(result1 != NULL)
+    {
+        printf(" %d ", result1->m_value);
+        result1 = result1->m_next;
+    }
+
+    printf("\n");
+    
     free(node1);
     free(node2);
     free(node3);
