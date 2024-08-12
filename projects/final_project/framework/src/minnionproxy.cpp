@@ -7,7 +7,6 @@
 #include <iostream>
 #include <unistd.h> 
 
-
 using namespace ilrd;
 
 const unsigned int BUFFER_SIZE = 1024;

@@ -9,6 +9,7 @@ date: 02/07/2023
 #include <unistd.h>
 #include <pthread.h>
   
+  
 /*Let us create a global variable to change it in threads*/ 
 int g = 0;
   
