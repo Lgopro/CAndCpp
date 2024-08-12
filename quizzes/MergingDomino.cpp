@@ -1,6 +1,10 @@
 
-#include <iostream>
+#include <iostream> /*std::cout*/
 #include <vector> /*vector use*/
+#include <string> /*copy*/
+#include <algorithm> /*reverse, find*/
+
+const int CAN_CONNECT_DOMINO = 2;
 
 namespace ilrd
 {
@@ -8,22 +12,36 @@ namespace ilrd
     class Domino
     {
         public:
-
+        /*
+        Description: Create the Domino class.
+        Arguments: Sequences of template vectors
+        Return: None.
+        Time complexity: O(n^2)
+        Space complexity: O(1)
+        */
         Domino(std::vector<std::vector<T>> &sequences);
         Domino() = default;
+        
+        /*
+        Description: Check if this character is mergable with other templates.
+        Arguments: Character to check and the number of vector
+        Return: True is mergable and false if not.
+        Time complexity: O(1)
+        Space complexity: O(1)
+        */
+        bool IsMergable(char ch, int number) const;
 
-        std::vector<std::vector<T>> GetSequences() const;
-        char GetWordFirstLetter(T& str) const;
-        char GetWordLastLetter(T& str) const;
-        void FlipWord(T& str);
-        bool IsMergable(char ch) const;
-        size_t GetCurrentVectorNumber() const;
-        size_t GetMaxVectorAmount() const;
+        /*
+        Description: Print all the possible Domino results.
+        Arguments: None.
+        Return: Void.
+        Time complexity: O(n^2)
+        Space complexity: O(1)
+        */
         void PrintResults();
+        
 
-        /*func for me*/
-        void PrintAll() const;
-        void PrintAllLut() const;
+        void PrintLut() const;
 
         private:
 
@@ -31,20 +49,82 @@ namespace ilrd
         Domino& operator=(const Domino& other) = delete; /*No need for assignment operator*/
 
         std::vector<std::vector<T>> m_sequences;
-        std::vector<std::vector<int>> m_Lut;
-
-        size_t m_vector_number;
-        size_t m_max_vector_amount;
+        std::vector<std::vector<int>> m_Lut; /*Counter for all characters in all the vectors in the sequence*/
+        std::vector<T> m_existring_var; /*Vector that stores all current words*/
     };
+
+    /*
+    Description: Get the word first letter.
+    Arguments: T reference of the word.
+    Return: The first letter of the word.
+    Time complexity: O(1)
+    Space complexity: O(1)
+    */
+    template <typename T>
+    char GetWordFirstLetter(T& str);
+
+    /*
+    Description: Get the word last letter.
+    Arguments: T reference of the word.
+    Return: The last letter of the word.
+    Time complexity: O(1)
+    Space complexity: O(1)
+    */
+    template <typename T>
+    char GetWordLastLetter(T& str);
+
+    /*
+    Description: Fleep the word letter order.
+    Arguments: T reference of the word.
+    Return: Void.
+    Time complexity: O(n)
+    Space complexity: O(1)
+    */
+    template <typename T>
+    void FlipWord(T& str);
+
+    /*
+    Description: Connect word1 and word2 according to Domino rules.
+    Arguments: T reference to word1 and word2 that needed to be connected.
+    Return: T connected word.
+    Time complexity: O(n)
+    Space complexity: O(1)
+    */
+    template <typename T>
+    T ConnectWord1Word2(T& word1, T& word2);
+
+    /*
+    Description: Connect word2 and word1 according to Domino rules.
+    Arguments: T reference to word1 and word2 that needed to be connected.
+    Return: T connected word.
+    Time complexity: O(n)
+    Space complexity: O(1)
+    */
+    template <typename T>
+    T ConnectWord2Word1(T& word1, T& word2);
 }
 
 using namespace ilrd;
 
+template <typename T>
+void Domino<T>::PrintLut() const
+{
+    for(size_t i = 0; i < m_Lut.size(); ++i)
+    {
+        std::cout << "Lut for vector " << i << ":\n";
+        for(size_t j = 0; j < m_Lut[i].size(); ++j)
+        {
+            if(m_Lut[i][j] > 0)
+            {
+                std::cout << static_cast<char>(j) << ": " << m_Lut[i][j] << " ";
+            }
+        }
+        std::cout << std::endl;
+    }
+}
 
 template <typename T>
-Domino<T>::Domino(std::vector<std::vector<T>> &sequences) : m_sequences(sequences), 
-                                                            m_max_vector_amount(sequences.capacity()),
-                                                            m_vector_number(0)
+Domino<T>::Domino(std::vector<std::vector<T>> &sequences) : m_sequences(sequences)
 {
     m_Lut.resize(sequences.size());
 
@@ -55,7 +135,7 @@ Domino<T>::Domino(std::vector<std::vector<T>> &sequences) : m_sequences(sequence
 
     for(size_t i = 0; i < sequences.size(); ++i)
     {
-        for(auto iter : m_sequences[i])
+        for(auto& iter : m_sequences[i])
         {
             ++m_Lut[i][GetWordFirstLetter(iter)];
             ++m_Lut[i][GetWordLastLetter(iter)];
@@ -64,124 +144,193 @@ Domino<T>::Domino(std::vector<std::vector<T>> &sequences) : m_sequences(sequence
 }
 
 template <typename T>
-std::vector<std::vector<T>> Domino<T>::GetSequences() const
-{
-    return m_sequences;
-}
-
-template <typename T>
-char Domino<T>::GetWordFirstLetter(T& str) const
+char ilrd::GetWordFirstLetter(T& str) 
 {
     return str[0];
 }
 
 template <typename T>
-char Domino<T>::GetWordLastLetter(T& str) const
+char ilrd::GetWordLastLetter(T& str)
 {
-    return str[sizeof(str)/sizeof(T) - 1];
+    return str[str.size() - 1];
 }
 
 template <typename T>
-void Domino<T>::FlipWord(T& str)
+void ilrd::FlipWord(T& str)
 {
-    size_t start = 0;
-    size_t end = str.size() - 1;
-    T temp;
-
-    while(start < end)
-    {
-        temp = str[start];
-        str[start] = str[end];
-        str[end] = temp;
-        ++start;
-        --end;
-    }
+    std::reverse(str.begin(), str.end());
 }
 
 template <typename T>
-bool Domino<T>::IsMergable(char ch) const
+bool Domino<T>::IsMergable(char ch, int number) const
 {
-    if(m_Lut[m_vector_number][ch] == 2)
-    {
-        return true;
-    }
-    return false;
-}
-
-template <typename T>
-size_t Domino<T>::GetCurrentVectorNumber() const
-{
-    return m_vector_number;
-}
-
-template <typename T>
-size_t Domino<T>::GetMaxVectorAmount() const
-{
-    return m_max_vector_amount;
+    return (CAN_CONNECT_DOMINO == m_Lut[number][ch]); 
 }
 
 template <typename T>
 void Domino<T>::PrintResults()
 {
+    for(size_t i = 0; i < m_sequences.size(); ++i)
+    {
+        std::cout<< "Vector number " << i << std::endl;
 
+        for(auto& iter : m_sequences[i])
+        {
+            if(IsMergable(GetWordFirstLetter(iter), i) || IsMergable(GetWordLastLetter(iter), i))
+            {
+
+                for (auto inner_iter = m_sequences[i].begin(); inner_iter != m_sequences[i].end(); ++inner_iter)
+                {
+                    if(&iter == &(*inner_iter))
+                    {
+                        continue;
+                    }
+
+                    if(IsMergable(GetWordFirstLetter(iter), i)
+                       && (GetWordFirstLetter(*inner_iter) 
+                       ==  GetWordFirstLetter(iter) || 
+                       GetWordLastLetter(*inner_iter) 
+                       ==  GetWordFirstLetter(iter)))
+                       {
+                            T word1 = ConnectWord1Word2(iter, *inner_iter);
+                            auto it1 = std::find(m_existring_var.begin(), m_existring_var.end(), word1);
+                            if (it1 == m_existring_var.end()) 
+                            {
+                                std::cout << word1 << " ";
+                                m_existring_var.push_back(word1);
+                            } 
+                            
+                            T word2 = ConnectWord2Word1(iter, *inner_iter);
+                            auto it2 = std::find(m_existring_var.begin(), m_existring_var.end(), word2);
+                            if (it2 == m_existring_var.end()) 
+                            {
+                                std::cout << word2 << " ";
+                                m_existring_var.push_back(word2);
+                            } 
+                       }
+
+                       else if((IsMergable(GetWordLastLetter(iter), i))
+                       && (GetWordFirstLetter(*inner_iter) 
+                       ==  GetWordLastLetter(iter) || 
+                       GetWordLastLetter(*inner_iter) 
+                       ==  GetWordLastLetter(iter)))
+                       {
+                            T word1 = ConnectWord1Word2(iter, *inner_iter);
+                            auto it1 = std::find(m_existring_var.begin(), m_existring_var.end(), word1);
+                            if (it1 == m_existring_var.end()) 
+                            {
+                                std::cout << word1 << " ";
+                                m_existring_var.push_back(word1);
+                            } 
+                            
+                            T word2 = ConnectWord2Word1(iter, *inner_iter);
+                            auto it2 = std::find(m_existring_var.begin(), m_existring_var.end(), word2);
+                            if (it2 == m_existring_var.end()) 
+                            {
+                                std::cout << word2 << " ";
+                                m_existring_var.push_back(word2);
+                            } 
+                       }
+                }
+
+                
+            } 
+            
+            auto it3 = std::find(m_existring_var.begin(), m_existring_var.end(), iter);
+            if (it3 == m_existring_var.end()) 
+            {
+                std::cout << iter << " ";
+                m_existring_var.push_back(iter);
+            }   
+        }
+        m_existring_var.clear();
+        std::cout << std::endl;
+    }
 }
+
+template <typename T>
+T ilrd::ConnectWord1Word2(T& word1, T& word2)
+{
+    size_t i = 0;
+    T result;
+
+    if(GetWordFirstLetter(word1) == GetWordFirstLetter(word2))
+    {
+        FlipWord(word1);
+    }
+    else if(GetWordFirstLetter(word1) == GetWordLastLetter(word2))
+    {
+        FlipWord(word1);
+        FlipWord(word2);
+    }
+    else if(GetWordLastLetter(word1) == GetWordLastLetter(word2))
+    {
+        FlipWord(word2);
+    }
+
+    result += word1;
+    result += word2.substr(1);
+    return result;
+}
+
+template <typename T>
+T ilrd::ConnectWord2Word1(T& word1, T& word2)
+{
+    T result;
+
+    if(GetWordFirstLetter(word2) == GetWordFirstLetter(word1))
+    {
+        FlipWord(word2);
+    }
+    else if (GetWordFirstLetter(word2) == GetWordLastLetter(word1))
+    {
+        FlipWord(word2);
+        FlipWord(word1);
+    }
+    else if(GetWordLastLetter(word2) == GetWordLastLetter(word1))
+    {
+        FlipWord(word1);
+    }
+
+    result += word2;
+    result += word1.substr(1);
+    return result;
+}
+
 
 template <typename T>
 void merge_pairs_only(std::vector<std::vector<T>> &sequences)
 {
     Domino<std::string> m_domino(sequences);
-    m_domino.PrintAll();
-}
-
-template <typename T>
-void Domino<T>::PrintAll() const
-{
-    for(size_t i = 0; i < m_max_vector_amount; ++i)
-    {
-        std::cout<< "Vector number " << i << std::endl;
-
-        for(auto iter : m_sequences[i])
-        {
-            std::cout << iter << " ";
-        }
-        std::cout << " " << std::endl;
-    }
-}
-
-template <typename T>
-void Domino<T>::PrintAllLut() const
-{
-    
-}
+    m_domino.PrintLut();
+    std::cout << std::endl;
+    m_domino.PrintResults();
+} 
 
 int main()
 {
     std::vector<std::vector<std::string>> m_vector_arrays;
 
     std::vector<std::string> m_first_array; 
+    std::vector<std::string> m_second_array; 
+    std::vector<std::string> m_third_array; 
+    std::vector<std::string> m_forth_array; 
 
     m_first_array.push_back("abc");
     m_first_array.push_back("cde");
-
-    std::vector<std::string> m_second_array; 
 
     m_second_array.push_back("abc");
     m_second_array.push_back("cde");
     m_second_array.push_back("efg");
 
-    std::vector<std::string> m_third_array; 
-
     m_third_array.push_back("abc");
     m_third_array.push_back("cde");
     m_third_array.push_back("cq");
-
-    std::vector<std::string> m_forth_array; 
 
     m_forth_array.push_back("xa");
     m_forth_array.push_back("ya");
     m_forth_array.push_back("ab");
     m_forth_array.push_back("bc");
-
 
     m_vector_arrays.push_back(m_first_array);
     m_vector_arrays.push_back(m_second_array);
