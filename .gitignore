@@ -10,7 +10,7 @@
 !*.hpp
 !makefile
 !.myfuncs
-
+!*.py
 
 #Even if there are in subdirectories here
 !*/
