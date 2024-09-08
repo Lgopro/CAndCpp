@@ -24,7 +24,18 @@ class SnakeGame:
         self.write_turtle.goto(0, 360)  # Position the turtle at the center of the screen
         self.write_turtle.color("white")
         self.score = 0
-        self.write_turtle.write("Score is: " + str(self.score), align="center", font=("Arial", 16, "bold"))
+        with open('SnakeGameHigestScore.txt', 'r') as file:
+            # Read the entire content of the file
+            file.seek(0)
+            content = file.read()
+            self.sentence = ''
+            index = 0
+            
+            while(content[index] != '\n'):
+                self.sentence += content[index]
+                index += 1
+
+        self.write_turtle.write("Score is: " + str(self.score) + ". " + self.sentence + ".", align="center", font=("Arial", 16, "bold"))
 
         self.random_turtle = Turtle("circle")
         self.random_turtle.color("green")
@@ -84,9 +95,9 @@ class SnakeGame:
             for index in range (1, len(self.segments)):
                 if round(self.coordinates[0][0]) == round(self.coordinates[index][0]) and round(self.coordinates[0][1]) == round(self.coordinates[index][1]):
                     self.write_turtle.goto(0, 0)  
-                    self.write_turtle.write("You lose! Score is: " + str(score), align="center", font=("Arial", 16, "bold"))
+                    self.write_turtle.write("You lose! Score is: " + str(self.score), align="center", font=("Arial", 16, "bold"))
                     colision_flag = True
-            
+
             if colision_flag == True:
                 break
                 
@@ -107,14 +118,33 @@ class SnakeGame:
                 self.random_y = random.randint(-360 // self.GRID_SIZE, 360 // self.GRID_SIZE) * self.GRID_SIZE
                 self.score += 10
                 self.write_turtle.clear()
-                self.write_turtle.write("Score is: " + str(self.score), align="center", font=("Arial", 16, "bold"))
+                self.write_turtle.write("Score is: " + str(self.score) + ". " + self.sentence + ".", align="center", font=("Arial", 16, "bold"))
                 
             self.random_turtle.penup()
             self.random_turtle.goto((self.random_x, self.random_y))
             self.random_turtle.pendown()
             
             time.sleep(0.1)
+        
+        # Open the file in read mode
+        with open('SnakeGameHigestScore.txt', 'r+') as file:
+            # Read the entire content of the file
+            content = file.read()
+            sentence = ''
+            index = 0
+            int_number = 55
+            file.seek(0)
+            while(content[index] != '\n'):
+                sentence += content[index]
+                index += 1
             
+            str_number_from_file = sentence[22:].strip()
+            int_number_from_file = int(str_number_from_file)
+            
+            str_number = str(self.score)
+            if(self.score > int_number_from_file):
+                file.seek(22)
+                file.write(str_number)    
         self.screen.exitonclick()
             
             
