@@ -11,6 +11,8 @@
 !makefile
 !.myfuncs
 !*.py
+!*.png
+!*.gif
 
 #Even if there are in subdirectories here
 !*/
