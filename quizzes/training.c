@@ -44,6 +44,19 @@ char* LongestSubstringKUnique(const char* str, size_t amount_of_letters)
     return NULL;
 }
 
+
+int CountBits(unsigned char num)
+{
+    int counter = 0;
+    for(int i = 0; i < 8; ++i)
+    {
+        if(num & 1 << i)
+        {
+            ++counter;
+        }
+    }
+    return counter;
+}
 int main()
 {
     char arr[20] = "abcdefabbc";
@@ -62,5 +75,9 @@ int main()
         }
         
     }
+
+    int bit_count = CountBits(15);
+    printf("The count is: %d\n", bit_count);
+
     return 0;
 }
